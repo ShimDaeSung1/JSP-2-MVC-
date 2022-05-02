@@ -28,7 +28,7 @@ JSP 모델2 방식(MVC 패턴) 자료실형 게시판
 
 * 목록 보기
   - 테이블 생성
-'''
+```
 
 create table mvcboard(
     idx number primary key,
@@ -49,10 +49,10 @@ insert into mvcboard(idx, name, title, content, pass) values(seq_board_num.nextv
 
 commit;
 
-'''
+```
 
 * DTO 및 DAO 클래스 생성
-'''
+```
 package model2.mvcboard;
 
 import java.sql.Date;
@@ -131,8 +131,7 @@ public class MVCBoardDTO {
 	
 	
 }
-
-'''
+```
 
 
 
