@@ -191,6 +191,7 @@ public class DBConnPool {
 
 - CRUD를 담당하는 DAO 생성
 ```
+
 package model2.mvcboard;
 
 import java.util.List;
@@ -211,7 +212,7 @@ public class MVCBoardDAO extends DBConnPool {
 		String query = "SELECT COUNT(*) FROM mvcboard";
 		
 		if(map.get("searchWord")!=null) {
-			query += "WHERE" + map.get("searchWord")+ " "
+			query += "WHERE" + map.get("searchField")+ " "
 					+ " LIKE '%"+map.get("searchWord")+ "%'";
 		}
 		try {
@@ -284,6 +285,27 @@ public class MVCBoardDAO extends DBConnPool {
 	}
 }
 
+```
+
+*진입 화면 작성
+- 서블릿 게시판 목록으로 바로가기
+
+![image](https://user-images.githubusercontent.com/86938974/166175751-51c74fca-d381-4934-9ae3-1081b04f017e.png)
+
+```
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<h2>파일첨부형 게시판</h2>
+	<a href= "../mvcboard/List.do">게시판목록</a>
+</body>
+</html>
 ```
 
 
