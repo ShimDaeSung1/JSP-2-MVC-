@@ -290,22 +290,23 @@ public class MVCBoardDAO extends DBConnPool {
 *진입 화면 작성
 - 서블릿 게시판 목록으로 바로가기
 
-![image](https://user-images.githubusercontent.com/86938974/166175751-51c74fca-d381-4934-9ae3-1081b04f017e.png)
+![image](https://user-images.githubusercontent.com/86938974/166175817-29d47810-ecc1-4ad7-a467-9de72125622c.png)
 
-```
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
-</head>
-<body>
-	<h2>파일첨부형 게시판</h2>
-	<a href= "../mvcboard/List.do">게시판목록</a>
-</body>
-</html>
-```
+
+
+	<%@ page language="java" contentType="text/html; charset=UTF-8"
+	    pageEncoding="UTF-8"%>
+	<!DOCTYPE html>
+	<html>
+	<head>
+	<meta charset="UTF-8">
+	<title>Insert title here</title>
+	</head>
+	<body>
+		<h2>파일첨부형 게시판</h2>
+		<a href= "../mvcboard/List.do">게시판목록</a>
+	</body>
+	</html>
+
 
 
