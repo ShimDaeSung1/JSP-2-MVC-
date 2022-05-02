@@ -133,5 +133,157 @@ public class MVCBoardDTO {
 }
 ```
 
+- DAO가 상속받아야 하는 DBConnPool (common 패키지 안에 만듦)
+![image](https://user-images.githubusercontent.com/86938974/166174460-414cb13c-d9bc-4b14-94fb-c1f2c2a93b79.png)
+
+```
+package common;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.sql.DataSource;
+
+public class DBConnPool {
+    public Connection con;
+    public Statement stmt;
+    public PreparedStatement psmt;
+    public ResultSet rs;
+
+    // 기본 생성자
+    public DBConnPool() {
+        try {
+            // 커넥션 풀(DataSource) 얻기
+            Context initCtx = new InitialContext();
+            Context ctx = (Context)initCtx.lookup("java:comp/env");
+            DataSource source = (DataSource)ctx.lookup("dbcp_myoracle");
+
+            // 커넥션 풀을 통해 연결 얻기
+            con = source.getConnection();
+
+            System.out.println("DB 커넥션 풀 연결 성공");
+        }
+        catch (Exception e) {
+            System.out.println("DB 커넥션 풀 연결 실패");
+            e.printStackTrace();
+        }
+    }
+
+    // 연결 해제(자원 반납)
+    public void close() {
+        try {            
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            if (psmt != null) psmt.close();
+            if (con != null) con.close();  // 자동으로 커넥션 풀로 반납됨
+
+            System.out.println("DB 커넥션 풀 자원 반납");
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+- CRUD를 담당하는 DAO 생성
+```
+package model2.mvcboard;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
+
+import common.DBConnPool;
+
+public class MVCBoardDAO extends DBConnPool {
+
+	public MVCBoardDAO() {
+		super();
+	}
+	
+	public int selectCount(Map<String, Object> map) {
+		int totalCount = 0;
+		
+		String query = "SELECT COUNT(*) FROM mvcboard";
+		
+		if(map.get("searchWord")!=null) {
+			query += "WHERE" + map.get("searchWord")+ " "
+					+ " LIKE '%"+map.get("searchWord")+ "%'";
+		}
+		try {
+			stmt = con.createStatement();
+			rs = stmt.executeQuery(query); //쿼리문 실행
+			rs.next();
+			totalCount = rs.getInt(1); // 검색된 게시물 개수 저장
+		}
+		catch(Exception e) {
+			System.out.println("게시물 카운트 중 예외 발생");
+			e.printStackTrace();
+		}
+		return totalCount; // 게시물 개수를 서블릿으로 반환
+	}
+	
+	//검색 조건에 맞는 게시물 목록 반환
+	public List<MVCBoardDTO> selectListPage(Map<String, Object> map){
+		List<MVCBoardDTO> board = new Vector<MVCBoardDTO>();
+		
+		//쿼리문 준비
+		String query = ""
+				+ " SELECT * FROM ("
+				+ "		SELECT Tb.*, ROWNUM rNUM FROM ("
+				+ "			SELECT * FROM mvcboard ";
+		//검색 조건이 있다면 WHERE절로 추가
+		if (map.get("searchWord")!= null) {
+			query += "WHERE" + map.get("searchField")
+					+ "LIKE '%" + map.get("searchWord") + "'%";
+			
+		}
+		query += " ORDER BY idx DESC"
+				+ " 	)Tb"
+				+ ")"
+				+ "WHERE rNUM BETWEEN ? AND ?";
+		
+		try {
+			psmt = con.prepareStatement(query); //동적 쿼리문 생성
+			psmt.setString(1, map.get("start").toString());
+			psmt.setString(2, map.get("end").toString());
+			rs = psmt.executeQuery(); //쿼리문 실행
+			
+			//반환된 게시물 목록을 List 컬렉션에 추가
+			
+			while(rs.next()) {
+				MVCBoardDTO dto = new MVCBoardDTO();
+				
+				dto.setIdx(rs.getString(1));
+				dto.setName(rs.getString(2));
+				dto.setTitle(rs.getString(3));
+				dto.setContent(rs.getString(4));
+				dto.setPostdate(rs.getDate(5));
+				dto.setOfile(rs.getString(6));
+				dto.setSfile(rs.getString(7));
+				dto.setDowncount(rs.getInt(8));
+				dto.setPass(rs.getString(9));
+				dto.setVisitcount(rs.getInt(10));
+				
+				board.add(dto);
+			
+			}
+			
+		}
+		catch(Exception e) {
+			System.out.println("게시물 조회 중 예외 발생");
+			e.printStackTrace();
+		}
+		return board; 
+					
+		
+	}
+}
+
+```
 
 
