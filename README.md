@@ -319,6 +319,59 @@ public class MVCBoardDAO extends DBConnPool {
   
 ```
 
+- utils > BoardPage.java 생성
+
+```
+package utils;
+
+public class BoardPage {
+    public static String pagingStr(int totalCount, int pageSize, int blockPage,
+            int pageNum, String reqUrl) {
+        String pagingStr = "";
+
+        // 단계 3 : 전체 페이지 수 계산
+        int totalPages = (int) (Math.ceil(((double) totalCount / pageSize)));
+
+        // 단계 4 : '이전 페이지 블록 바로가기' 출력
+        int pageTemp = (((pageNum - 1) / blockPage) * blockPage) + 1;
+        if (pageTemp != 1) {
+            pagingStr += "<a href='" + reqUrl + "?pageNum=1'>[첫 페이지]</a>";
+            pagingStr += "&nbsp;";
+            pagingStr += "<a href='" + reqUrl + "?pageNum=" + (pageTemp - 1)
+                         + "'>[이전 블록]</a>";
+        }
+
+        // 단계 5 : 각 페이지 번호 출력
+        int blockCount = 1;
+        while (blockCount <= blockPage && pageTemp <= totalPages) {
+            if (pageTemp == pageNum) {
+                // 현재 페이지는 링크를 걸지 않음
+                pagingStr += "&nbsp;" + pageTemp + "&nbsp;";
+            } else {
+                pagingStr += "&nbsp;<a href='" + reqUrl + "?pageNum=" + pageTemp
+                             + "'>" + pageTemp + "</a>&nbsp;";
+            }
+            pageTemp++;
+            blockCount++;
+        }
+
+        // 단계 6 : '다음 페이지 블록 바로가기' 출력
+        if (pageTemp <= totalPages) {
+            pagingStr += "<a href='" + reqUrl + "?pageNum=" + pageTemp
+                         + "'>[다음 블록]</a>";
+            pagingStr += "&nbsp;";
+            pagingStr += "<a href='" + reqUrl + "?pageNum=" + totalPages
+                         + "'>[마지막 페이지]</a>";
+        }
+
+        return pagingStr;
+    }
+}
+
+
+
+```
+
 * 컨트롤러(서블릿)작성
 
 ```
@@ -469,3 +522,440 @@ protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws Se
 	</html>
 
 ```
+
+- 여기서 입력된 검색어는 ListController 서블릿으로 전송된다. 그 후 MVCBoardDAO클래스의 selectCount()와 selectListPage()의 인수로 전달된다.
+- EL의 empty연산자로 출력할 게시물이 없는지 확인한다. boardLists는 ListController에서 request영역에 저장한 값이다.
+- 출력할 게시물이 있다면 <c:forEach>태그를 통해 반복 출력한다.
+
+* 글쓰기
+	- 서블릿 매핑(다음 부터는 애너테이션 사용), 첨부 파일 최대 용량 설정 > web.xml
+```
+<servlet>
+    <servlet-name>MVCBoardWrite</servlet-name>
+    <servlet-class>model2.mvcboard.WriteController</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>MVCBoardWrite</servlet-name>
+    <url-pattern>/mvcboard/write.do</url-pattern>
+  </servlet-mapping>
+  
+  
+  <context-param>
+    <param-name>maxPostSize</param-name>
+    <param-value>1024000</param-value>
+  </context-param>
+  
+```
+* 컨트롤러 작성 1 - 작성폼으로 진입
+![image](https://user-images.githubusercontent.com/86938974/166191920-eebe23d8-e8e5-477f-85c3-26d560d133d3.png)
+
+
+```
+protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		req.getRequestDispatcher("/MVCBoard/Write.jsp").forward(req, resp);
+		
+		
+	}
+
+```
+- 작성폼으로 진입하기 위해 doGet()메서드 사용, 단순히 글쓰기 페이지로 포워드만 해준다.
+
+* 뷰 작성
+```
+	<%@ page language="java" contentType="text/html; charset=UTF-8"
+	    pageEncoding="UTF-8"%>
+	<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+	<!DOCTYPE html>
+	<html>
+	<head>
+	<meta charset="UTF-8">
+	<title>파일 첨부형 게시판</title>
+	<script type="text/javascript">
+	    function validateForm(form) {  // 필수 항목 입력 확인
+		if (form.name.value == "") {
+		    alert("작성자를 입력하세요.");
+		    form.name.focus();
+		    return false;
+		}
+		if (form.title.value == "") {
+		    alert("제목을 입력하세요.");
+		    form.title.focus();
+		    return false;
+		}
+		if (form.content.value == "") {
+		    alert("내용을 입력하세요.");
+		    form.content.focus();
+		    return false;
+		}
+		if (form.pass.value == "") {
+		    alert("비밀번호를 입력하세요.");
+		    form.pass.focus();
+		    return false;
+		}
+	    }
+	</script>
+	</head>
+	<h2>파일 첨부형 게시판 - 글쓰기(Write)</h2>
+	<form name="writeFrm" method="post" enctype="multipart/form-data"
+	      action="../mvcboard/write.do" onsubmit="return validateForm(this);">
+	<table border="1" width="90%">
+	    <tr>
+		<td>작성자</td>
+		<td>
+		    <input type="text" name="name" style="width:150px;" />
+		</td>
+	    </tr>
+	    <tr>
+		<td>제목</td>
+		<td>
+		    <input type="text" name="title" style="width:90%;" />
+		</td>
+	    </tr>
+	    <tr>
+		<td>내용</td>
+		<td>
+		    <textarea name="content" style="width:90%;height:100px;"></textarea>
+		</td>
+	    </tr>
+	    <tr>
+		<td>첨부 파일</td>
+		<td>
+		    <input type="file" name="ofile" />
+		</td>
+	    </tr>
+	    <tr>
+		<td>비밀번호</td>
+		<td>
+		    <input type="password" name="pass" style="width:100px;" />
+		</td>
+	    </tr>
+	    <tr>
+		<td colspan="2" align="center">
+		    <button type="submit">작성 완료</button>
+		    <button type="reset">RESET</button>
+		    <button type="button" onclick="location.href='../mvcboard/list.do';">
+			목록 바로가기
+		    </button>
+		</td>
+	    </tr>
+	</table>    
+	</form>
+	</body>
+	</html>
+```
+- 폼값을 서버로 전송하기 전에 필수 항목 중 빈 값이 있는지를 확인하는 자바스크립트 함수 삽입
+![image](https://user-images.githubusercontent.com/86938974/166192870-dbb81c0c-916b-4af9-bc48-5929f414eb1a.png)
+
+* 모델 작성(DAO에 기능 추가) - 글쓰기 처리 메서드 추가
+```
+
+// 게시글 데이터를 받아 DB에 추가합니다.(파일 업로드 지원)
+	public int insertWrite(MVCBoardDTO dto) {
+		int result = 0;
+		try {
+			String query = "INSERT INTO mvcboard("
+					+ "idx, name, title, content, ofile, sfile, pass)"
+					+ "VALUES("
+					+ "seq_board_num.NEXTVAL,?,?,?,?,?,?)";
+			psmt = con.prepareStatement(query);
+			psmt.setString(1, dto.getName());
+			psmt.setString(2, dto.getTitle());
+			psmt.setString(3, dto.getContent());
+			psmt.setString(4, dto.getOfile());
+			psmt.setString(5, dto.getSfile());
+			psmt.setString(6, dto.getPass());
+		}
+		catch(Exception e) {
+			System.out.println("게시물 입력 중 예외 발생");
+			e.printStackTrace();
+		}
+		return result;
+		
+	}
+
+```
+- 웹페이지(Write.jsp)에서 전송한 폼값을 서블릿이 받아 DTO에 저장 후 이 DAO로 전달
+- INSERT쿼리문 작성
+
+* 컨트롤러 작성2 - 폼값 처리
+![image](https://user-images.githubusercontent.com/86938974/166193630-101682dd-45b5-4046-9eb7-74ed0e451a1a.png)
+
+```
+package fileUpload;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.oreilly.servlet.MultipartRequest;
+
+public class FileUtil {
+	//파일 업로드(multipart/form-data 요청) 처리
+	public static MultipartRequest uploadFile(HttpServletRequest req,
+			String saveDirectory, int maxPostSize) {
+		try {
+			//파일 업로드
+			return new MultipartRequest(req, saveDirectory, maxPostSize, "UTF-8");
+		}
+		catch(Exception e) {
+			//업로드 실패
+			e.printStackTrace();
+			return null;
+		}
+	}
+}
+
+```
+- 컨트롤러에 글쓰기 메서드 추가
+
+
+```
+
+package model2.mvcboard;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.oreilly.servlet.MultipartRequest;
+
+import fileUpload.FileUtil;
+import utils.JSFunction;
+
+/**
+ * Servlet implementation class WriteController
+ */
+@WebServlet("/WriteController")
+public class WriteController extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+       
+    /**
+     * @see HttpServlet#HttpServlet()
+     */
+    public WriteController() {
+        super();
+        // TODO Auto-generated constructor stub
+    }
+
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		req.getRequestDispatcher("/Write.jsp").forward(req, resp);
+		
+		
+	}
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		// 1.파일 업로드 처리
+		// 업로드 디렉터리의 물리적 경로 확인
+		String saveDirectory = req.getServletContext().getRealPath("/Uploads");
+		
+		//초기화 매개변수로 설정한 첨부 파일 최대 용량 확인
+		ServletContext application = getServletContext();
+		int maxPostSize = Integer.parseInt(application.getInitParameter("maxPostSize"));
+		
+		//파일 업로드
+		MultipartRequest mr = FileUtil.uploadFile(req, saveDirectory, maxPostSize);
+		if(mr == null) {
+			JSFunction.alertLocation(resp, "첨부 파일이 제한 용량을 초과합니다.", "../write.do");
+			return;
+		}
+		
+		//2.파일 업로드 외 처리
+		//폼값을 DTO에 저장
+		MVCBoardDTO dto = new MVCBoardDTO();
+		
+		dto.setName(mr.getParameter("name"));
+		dto.setTitle(mr.getParameter("title"));
+		dto.setContent(mr.getParameter("content"));
+		dto.setPass(mr.getParameter("pass"));
+		
+		//원본 파일명과 저장된 파일 이름 설정
+		String fileName = mr.getFilesystemName("ofile");
+		if(fileName != null) {
+			//첨부파일이 있을 경우 파일명 변경
+			// 새로운 파일명 생성
+			String now = new SimpleDateFormat("yyyyMMdd_HmsS").format(new Date());
+			String ext = fileName.substring(fileName.lastIndexOf("."));
+			String newFileName = now + ext;
+			
+			//파일명 변경
+			File oldFile = new File(saveDirectory + File.separator + fileName);
+			File newFile = new File(saveDirectory + File.separator + newFileName);
+			oldFile.renameTo(newFile);
+			
+			dto.setOfile(fileName); //원래 파일 이름
+			dto.setSfile(newFileName); //서버에 저장된 파일 이름
+			
+		}
+		
+		//DAO를 통해 DB에 게시 내용 저장
+		MVCBoardDAO dao = new MVCBoardDAO();
+		int result = dao.insertWrite(dto);
+		dao.close();
+		
+		if(result ==1 ) {
+			resp.sendRedirect("../list.do");
+		}
+		else {
+			resp.sendRedirect("../write.do");
+		}
+		
+		
+	
+	}
+
+}
+
+
+```
+- 파일이 업로드될 Uploads 디렉터리의 물리적 경로와 web.xml에 컨텍스트 초기화 매개변수로 설정해둔 업로드 제한 용량을 얻어온 후, 앞에서 만든 FileUtil.uploadFile()메서드 호출
+- 폼값을 DTO에 저장해 DAO를 통해 데이터베이스에 기록
+
+- 유틸리티 메서드 추가 ( utils.JSFunction.java )
+
+```
+ // 메시지 알림창을 띄운 후 이전 페이지로 돌아갑니다.
+    public static void alertBack(String msg, JspWriter out) {
+        try {
+            String script = ""
+                          + "<script>"
+                          + "    alert('" + msg + "');"
+                          + "    history.back();"
+                          + "</script>";
+            out.println(script);
+        }
+        catch (Exception e) {}
+    }
+
+    // 메시지 알림창을 띄운 후 명시한 URL로 이동합니다.
+    public static void alertLocation(HttpServletResponse resp, String msg, String url) {
+        try {
+            resp.setContentType("text/html;charset=UTF-8");
+            PrintWriter writer = resp.getWriter();
+            String script = ""
+                          + "<script>"
+                          + "    alert('" + msg + "');"
+                          + "    location.href='" + url + "';"
+                          + "</script>";
+            writer.print(script);
+        }
+        catch (Exception e) {}
+    }
+
+    // 메시지 알림창을 띄운 후 이전 페이지로 돌아갑니다.
+    public static void alertBack(HttpServletResponse resp, String msg) {
+        try {
+            resp.setContentType("text/html;charset=UTF-8");
+            PrintWriter writer = resp.getWriter();
+            String script = ""
+                          + "<script>"
+                          + "    alert('" + msg + "');"
+                          + "    history.back();"
+                          + "</script>";
+            writer.print(script);
+        }
+        catch (Exception e) {}
+    }
+```
+-실행화면(Write.jsp)
+
+#사진 첨부할 것(509)
+
+파일의 용량이 1MB를 초과하면 다음과 같이 경고창이 뜬 후 화면으로 돌아간다.
+![image](https://user-images.githubusercontent.com/86938974/166206034-8d8d9d16-5f3a-43eb-bdf4-4f7f52f0438f.png)
+
+* 모델 작성
+	- 주어진 일련번호에 해당하는 게시물을 DTO로 반환하는 메소드와 조회수를 증가시키는 메소드를 작성
+```
+ //주어진 일련번호에 해당하는 게시물을 DTO에 담아 반환한다.
+    public MVCBoardDTO selectView(String idx) {
+    	MVCBoardDTO dto = new MVCBoardDTO();
+    	String query = "SELECT * FROM mvcboard WHERE idx=?";
+    	try {
+    		psmt = con.prepareStatement(query);
+    		psmt.setString(1, idx);
+    		rs = psmt.executeQuery();
+    		
+    		if (rs.next()) {  // 결과를 DTO 객체에 저장
+                dto.setIdx(rs.getString(1));
+                dto.setName(rs.getString(2));
+                dto.setTitle(rs.getString(3));
+                dto.setContent(rs.getString(4));
+                dto.setPostdate(rs.getDate(5));
+                dto.setOfile(rs.getString(6));
+                dto.setSfile(rs.getString(7));
+                dto.setDowncount(rs.getInt(8));
+                dto.setPass(rs.getString(9));
+                dto.setVisitcount(rs.getInt(10));
+            }
+        }
+        catch (Exception e) {
+            System.out.println("게시물 상세보기 중 예외 발생");
+            e.printStackTrace();
+    	}
+    	return dto;
+    }
+    // 주어진 일련번호에 해당하는 게시물의 조회수 1 증가
+    public void updateVisitCount(String idx) {
+    	String query = "UPDATE mvcboard SET "
+    			+ "visitcount = visitcount+1"
+    			+ "WHERE idx=?";
+    	try {
+    		psmt = con.prepareStatement(query);
+    		psmt.setString(1, idx);
+    		psmt.executeQuery();
+    	}
+    	catch(Exception e) {
+    		System.out.println("게시물 조회 수 증가 중 예외 발생");
+    		e.printStackTrace();
+    	}
+    }
+```
+*컨트롤러 작성
+	- 상세 보기를 위한 서블릿 작성
+	- 매핑은 애너테이션 사용
+
+```
+
+public class ViewController extends HttpServlet {
+	
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		//게시물 불러오기
+		MVCBoardDAO dao = new MVCBoardDAO();
+		String idx = req.getParameter("idx");
+		dao.updateVisitCount(idx);
+		MVCBoardDTO dto = dao.selectView(idx);
+		dao.close();
+		
+		//줄바꿈 처리
+		dto.setContent(dto.getContent().replaceAll("\r\n", "<br/>"));
+		
+		//게시물 (dto) 저장 후 뷰로 포워드
+		req.setAttribute("dto", dto);
+		req.getRequestDispatcher("/View.jsp").forward(req, resp);
+		
+	}
+
+```
+- 게시물 조회 요청이 오면 DAO객체 생성, 조회수 증가 후 게시물 내용을 가져온다.
+- 줄바꿈 처리
+- DTO객체를 request 영역에 저장 후 뷰로 포워드한다.
+
+* 뷰 작성
+	- 게시물 내용을 출력해줄 뷰 작성
+
+
+
+
