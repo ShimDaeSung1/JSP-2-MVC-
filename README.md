@@ -434,9 +434,9 @@ protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws Se
 - DAO객체 생성
 - 뷰로 전달할 데이터를 request영역에 저장 후 List.jsp로 포워드한다.
 
-*뷰(JSP) 만들기
+* 뷰(JSP) 만들기
 
-```
+
 
 	<%@ page language="java" contentType="text/html; charset=UTF-8"
 	    pageEncoding="UTF-8"%>
@@ -521,7 +521,7 @@ protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws Se
 	</body>
 	</html>
 
-```
+
 
 - 여기서 입력된 검색어는 ListController 서블릿으로 전송된다. 그 후 MVCBoardDAO클래스의 selectCount()와 selectListPage()의 인수로 전달된다.
 - EL의 empty연산자로 출력할 게시물이 없는지 확인한다. boardLists는 ListController에서 request영역에 저장한 값이다.
@@ -529,35 +529,35 @@ protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws Se
 
 * 글쓰기
 	- 서블릿 매핑(다음 부터는 애너테이션 사용), 첨부 파일 최대 용량 설정 > web.xml
-```
-<servlet>
-    <servlet-name>MVCBoardWrite</servlet-name>
-    <servlet-class>model2.mvcboard.WriteController</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>MVCBoardWrite</servlet-name>
-    <url-pattern>/mvcboard/write.do</url-pattern>
-  </servlet-mapping>
+
+	<servlet>
+	    <servlet-name>MVCBoardWrite</servlet-name>
+	    <servlet-class>model2.mvcboard.WriteController</servlet-class>
+	  </servlet>
+	  <servlet-mapping>
+	    <servlet-name>MVCBoardWrite</servlet-name>
+	    <url-pattern>/mvcboard/write.do</url-pattern>
+	  </servlet-mapping>
+
+
+	  <context-param>
+	    <param-name>maxPostSize</param-name>
+	    <param-value>1024000</param-value>
+	  </context-param>
   
-  
-  <context-param>
-    <param-name>maxPostSize</param-name>
-    <param-value>1024000</param-value>
-  </context-param>
-  
-```
+
 * 컨트롤러 작성 1 - 작성폼으로 진입
-![image](https://user-images.githubusercontent.com/86938974/166191920-eebe23d8-e8e5-477f-85c3-26d560d133d3.png)
+![화면 캡처 2022-05-03 101111](https://user-images.githubusercontent.com/86938974/166391098-7e2aa903-3322-478c-816d-df24b2686b9d.png)
 
 
-```
-protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		req.getRequestDispatcher("/MVCBoard/Write.jsp").forward(req, resp);
-		
-		
-	}
 
-```
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+			req.getRequestDispatcher("/MVCBoard/Write.jsp").forward(req, resp);
+
+
+		}
+
+
 - 작성폼으로 진입하기 위해 doGet()메서드 사용, 단순히 글쓰기 페이지로 포워드만 해준다.
 
 * 뷰 작성
@@ -642,12 +642,12 @@ protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws Se
 	</form>
 	</body>
 	</html>
-```
+
 - 폼값을 서버로 전송하기 전에 필수 항목 중 빈 값이 있는지를 확인하는 자바스크립트 함수 삽입
-![image](https://user-images.githubusercontent.com/86938974/166192870-dbb81c0c-916b-4af9-bc48-5929f414eb1a.png)
+
 
 * 모델 작성(DAO에 기능 추가) - 글쓰기 처리 메서드 추가
-```
+
 
 // 게시글 데이터를 받아 DB에 추가합니다.(파일 업로드 지원)
 	public int insertWrite(MVCBoardDTO dto) {
@@ -678,7 +678,7 @@ protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws Se
 - INSERT쿼리문 작성
 
 * 컨트롤러 작성2 - 폼값 처리
-![image](https://user-images.githubusercontent.com/86938974/166193630-101682dd-45b5-4046-9eb7-74ed0e451a1a.png)
+![화면 캡처 2022-05-03 101303](https://user-images.githubusercontent.com/86938974/166391203-f6179b9c-4b12-4793-946f-ca021a1ce7be.png)
 
 ```
 package fileUpload;
