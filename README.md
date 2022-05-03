@@ -1453,4 +1453,153 @@ protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws Se
 </body>
 </html>
 ```
+- hidden타입 입력상자로 일련번호, 서버에 저장된 파일명, 원본 파일명 전달
+
+* 모델 작성
+	* 수정 처리를 위해 DAO클래스에 메서드 추가
+
+```
+//게시글 데이터를 받아 DB에 저장되어 있던 내용 갱신
+    public int updatePost(MVCBoardDTO dto) {
+    	
+    	int result = 0;
+    	try {
+    		//쿼리문 템플릿 준비
+    		String query = "UPDATE mvcboard"
+    				+ " SET title=?, name=?, content=?, ofile=?, sfile=?"
+    				+ "WHERE idx=? and pass=?";
+    		
+    		//쿼리문 준비
+    		psmt = con.prepareStatement(query);
+    		psmt.setString(1, dto.getTitle());
+    		psmt.setString(2, dto.getName());
+    		psmt.setString(3, dto.getContent());
+    		psmt.setString(4, dto.getOfile());
+    		psmt.setString(5, dto.getSfile());
+    		psmt.setString(6, dto.getIdx());
+    		psmt.setString(7, dto.getPass());
+    		
+    		//쿼리문 실행
+    		result = psmt.executeUpdate();
+    	}
+    	catch(Exception e) {
+    		System.out.println("게시물 수정 중 예외 발생");
+    		e.printStackTrace();
+    	}
+    	return result;
+    }
+```
+
+* 컨트롤러 작성
+	* 마지막으로 수정처리를 위한 서블릿 작성, EditController.java에 doPost()추가 
+```
+
+protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		//1. 파일 업로드 처리
+		// 업로드 디렉터리의 물리적 경로 확인
+		String saveDirectory = req.getServletContext().getRealPath("/Uploads");
+		
+		//초기화 매개변수로 설정한 첨부 파일 최대 용량 확인
+		ServletContext application = getServletContext();
+		int maxPostSize = Integer.parseInt(application.getInitParameter("maxPostSize"));
+		
+		//파일 업로드
+		MultipartRequest mr = FileUtil.uploadFile(req, saveDirectory, maxPostSize);
+		
+		if(mr==null) {
+			//파일 업로드 실패
+			JSFunction.alertBack(resp, "첨부 파일이 제한 용량을 초과합니다.");
+			return;
+		}
+		
+		// 2. 파일 업로드 외 처리
+		// 수정 내용을 매개변수에서 얻어옴
+		String idx = mr.getParameter("idx");
+		String prevOfile = mr.getParameter("prevOfile");
+		String prevSfile = mr.getParameter("prevSfile");
+		
+		String name = mr.getParameter("name");
+		String title = mr.getParameter("title");
+		String content = mr.getParameter("content");
+		
+		//비밀번호는 session에서
+		HttpSession session = req.getSession();
+		String pass = (String)session.getAttribute("pass");
+		
+		//DTO에 저장
+		MVCBoardDTO dto = new MVCBoardDTO();
+		dto.setIdx(idx);
+		dto.setName(name);
+		dto.setTitle(title);
+		dto.setContent(content);
+		dto.setPass(pass);
+		
+		//원본 파일명과 저장된 파일 이름 설정
+		String fileName = mr.getFilesystemName("ofile");
+		if (fileName != null) {
+			//첨부 파일명이 있을 경우 파일명 변경
+			// 새로운 파일명 생성
+			String now = new SimpleDateFormat("yyyyMMdd_HmsS").format(new Date());
+			String ext = fileName.substring(fileName.lastIndexOf("."));
+			String newFileName = now+ext;
+			
+			//파일명 변경
+			File oldFile = new File(saveDirectory + File.separator + fileName);
+			File newFile = new File(saveDirectory + File.separator + newFileName);
+			oldFile.renameTo(newFile);
+			
+			//DTO에 저장
+			dto.setOfile(fileName);//원래 파일 이름
+			dto.setSfile(newFileName);//서버에 저장된 파일 이름
+			
+			//기존 파일 삭제
+			FileUtil.deleteFile(req, "/Uploads", prevSfile);
+			
+		}
+		else {
+			//첨부 파일이 없으면 기존 이름 유지
+			dto.setOfile(prevOfile);
+			dto.setSfile(prevSfile);
+		}
+		
+		//DB에 수정 내용 반영
+		MVCBoardDAO dao = new MVCBoardDAO();
+		int result = dao.updatePost(dto);
+		dao.close();
+		
+		if(result==1) {
+			//수정 성공
+			session.removeAttribute("pass");
+			resp.sendRedirect("/view.do?idx="+idx);
+		}
+		else {//수정 실패
+			JSFunction.alertLocation(resp, "비밀번호 검증을 다시 진행해주세요", "/view.do?idx="+idx);
+		}
+	}
+
+```
+- 파일이 업로드될 디렉터리의 물리적 경로와 업로드 제한 용량을 얻어온 후, 이 둘을 인수로 넣어 파일 업로드
+- 성공했다면 수정 내용을 얻어와 DTO에 저장
+- 첨부 파일이 있다면 앞에서와 같이 파일명 처리를 해주고 기존 파일이 있다면 삭제, 첨부 파일이 없다면 기존 유지
+- updatePost()메서드 호출해 게시물 수정
+
+* 동작 확인
+![image](https://user-images.githubusercontent.com/86938974/166400323-2089b790-53d3-4d2f-9d01-a0f7c84d8306.png)
+![image](https://user-images.githubusercontent.com/86938974/166400330-c793378f-11bb-42a1-af09-22147db00f87.png)
+	* 검색
+![image](https://user-images.githubusercontent.com/86938974/166400353-8637b535-007b-40f0-8edf-aa72ae41f3e3.png)
+	* 글쓰기
+![image](https://user-images.githubusercontent.com/86938974/166400369-2ade65a2-0e2d-45c7-b190-fdc1457bacb2.png)
+![image](https://user-images.githubusercontent.com/86938974/166400395-435c7966-d2d6-49fe-aa49-6a6839d7c5f8.png)
+	* 다운로드(다운로드 수 증가, 아래 다운로드 목록 표시)
+![image](https://user-images.githubusercontent.com/86938974/166400416-2c878136-623c-4866-99ba-58d0e6a717a2.png)
+![image](https://user-images.githubusercontent.com/86938974/166400424-35e86c7a-f51f-40dc-850a-6568c3d15414.png)
+	* 수정하기
+![image](https://user-images.githubusercontent.com/86938974/166400443-41cd915d-91ef-412d-bb7b-60296efe166a.png)
+![image](https://user-images.githubusercontent.com/86938974/166400797-268815e8-9933-47b9-902a-9891d5d0c9f4.png)
+
+
+
+
+
 
