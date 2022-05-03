@@ -882,7 +882,7 @@ public class WriteController extends HttpServlet {
         catch (Exception e) {}
     }
 ```
-
+```
 
 -실행화면(Write.jsp)
 
