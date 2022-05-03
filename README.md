@@ -1625,7 +1625,9 @@ style.css
   <tr class="bg-color1">
   
 ```
+- view도 수정
 ![image](https://user-images.githubusercontent.com/86938974/166406806-a08d7237-867f-4b7a-b214-3463325d389e.png)
+![image](https://user-images.githubusercontent.com/86938974/166407320-2803b33c-7f51-4c4c-b467-0bad55d44676.png)
 
 
 
