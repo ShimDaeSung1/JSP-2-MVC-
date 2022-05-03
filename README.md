@@ -1595,8 +1595,15 @@ protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws S
 ![image](https://user-images.githubusercontent.com/86938974/166400416-2c878136-623c-4866-99ba-58d0e6a717a2.png)
 ![image](https://user-images.githubusercontent.com/86938974/166400424-35e86c7a-f51f-40dc-850a-6568c3d15414.png)
 	* 수정하기
-![image](https://user-images.githubusercontent.com/86938974/166400443-41cd915d-91ef-412d-bb7b-60296efe166a.png)
-![image](https://user-images.githubusercontent.com/86938974/166400797-268815e8-9933-47b9-902a-9891d5d0c9f4.png)
+![image](https://user-images.githubusercontent.com/86938974/166403432-6a56c9fc-af85-4fe5-bb74-519ada64f0e3.png)
+![image](https://user-images.githubusercontent.com/86938974/166403444-f0083825-ed77-4f19-b9a5-2f421d573708.png)
+	* 삭제하기 클릭 -> 비밀번호 검증
+![image](https://user-images.githubusercontent.com/86938974/166403545-6464bf1b-a1fc-4a3b-bf27-e5f300ab8d25.png)
+![image](https://user-images.githubusercontent.com/86938974/166403554-d2989ff6-a391-49f0-a638-8328e27d1b50.png)
+![image](https://user-images.githubusercontent.com/86938974/166403560-54953e73-ee7b-46c6-9eaa-b74e928e8e6d.png)
+
+* 
+
 
 
 
