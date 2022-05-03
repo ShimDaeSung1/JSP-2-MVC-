@@ -1602,7 +1602,7 @@ protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws S
 ![image](https://user-images.githubusercontent.com/86938974/166403554-d2989ff6-a391-49f0-a638-8328e27d1b50.png)
 ![image](https://user-images.githubusercontent.com/86938974/166403560-54953e73-ee7b-46c6-9eaa-b74e928e8e6d.png)
 
-* 
+* 부트스트랩 이용한 디자인
 
 
 
