@@ -983,5 +983,474 @@ public class ViewController extends HttpServlet {
 	- 게시물 내용을 출력해줄 뷰 작성
 
 
+```
 
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h2>파일 첨부형 게시판- 상세보기(View)</h2>
+
+<table border="1" width="90%">
+	<colgroup>
+		<col width="15%"/><col width="35%"/>
+		<col width="15%"/><col width="*"/>
+	</colgroup>
+	
+	<!-- 게시글 정보 -->
+	<tr>
+		<td>번호</td> <td>${dto.idx}</td>
+		<td>작성자</td> <td>${dto.name}</td>
+	</tr>
+	<tr>
+		<td>작성일</td> <td>${dto.postdate}</td>
+		<td>조회수</td> <td>${dto.visitcount}</td>
+	</tr>
+	<tr>
+		<td>제목</td>
+		<td colspan="3" height="100">${dto.content}</td>
+	</tr>
+	<!-- 첨부파일 -->
+	<tr>
+		<td>첨부파일</td>
+		<td>
+			<c:if test="${not empty dto.ofile}">
+			${dto.ofile}
+			<a href="/download.do?ofile=${dto.ofile}&sfile=${dto.sfile}&idx=${dto.idx}">[다운로드]</a>
+			</c:if>
+		</td>
+		<td>다운로드수</td>
+		<td>${dto.downcount}</td>
+	</tr>
+	
+	<!-- 하단메뉴 (버튼) -->
+	<tr>
+		<td colspan="4" align="center">
+			<button type = "button" onclick="location.href= '/pass.do?mode=edit&idx=${param.idx}';">수정하기</button>
+			<button type = "button" onclick="location.href= '/pass.do?mode=delete&idx=${param.idx}';">삭제하기</button>
+			<button type = "button" onclick = "location.href='/list.do';">목록 바로가기</button> 
+		</td>
+	</tr>
+	
+</table>
+</body>
+</html>
+
+
+```
+
+- 서블릿에서 request 영역에 저장한 DTO객체의 내용을 EL로 출력한다. ${속성명.변수}
+- 첨부파일은 필수 입력사항이 아니므로 JSTL인 <c:if>를 이용해 파일이 있을 때만 파일이름과 다운로드 링크 출력
+- 수정하기, 삭제하기의 경우 비밀번호 검증 페이지인 /pass.do로 먼저 이동한다.
+![image](https://user-images.githubusercontent.com/86938974/166393231-03e63042-f3c4-4e37-bd04-c0870b779466.png)
+
+* 동작 확인
+![image](https://user-images.githubusercontent.com/86938974/166393278-617dd15e-1fa8-41fb-9853-5b1a438932d8.png)
+
+![image](https://user-images.githubusercontent.com/86938974/166393297-2d482624-0a3d-4c0c-ab77-844d47e98cfa.png)
+글의 제목 클릭 시 내용 출력
+![image](https://user-images.githubusercontent.com/86938974/166393323-716c1cf4-6600-40f3-a64f-51df825e47f4.png)
+
+* 파일 다운로드
+- 모델작성 (다운로드 횟수 증가시키는 메서드 DAO 추가)
+```
+
+// 주어진 일련번호에 해당하는 게시물의 조회수 1 증가
+    public void updateVisitCount(String idx) {
+    	String query = "UPDATE mvcboard SET "
+    			+ "visitcount = visitcount+1"
+    			+ "WHERE idx=?";
+    	try {
+    		psmt = con.prepareStatement(query);
+    		psmt.setString(1, idx);
+    		psmt.executeQuery();
+    	}
+    	catch(Exception e) {
+    		System.out.println("게시물 조회 수 증가 중 예외 발생");
+    		e.printStackTrace();
+    	}
+    }
+    
+    //다운로드 횟수 1회 증가
+    public void downCountPlus(String idx) {
+    	String sql = "UPDATE mvcboard SET"
+    			+ " dwoncount=downcount+1"
+    			+ "WHERE idx=?";
+    	
+    	try {
+    		psmt = con.prepareStatement(sql);
+    		psmt.setString(1, idx);
+    		psmt.executeUpdate();
+    		
+    	}
+    	catch(Exception e) {
+    		
+    	}
+    }
+
+```
+- 일련번호를 변수로 받아 다운카운트 1 증가
+
+* 컨트롤러 작성 (FileUtil.java)
+
+
+```
+
+//명시한 파일을 찾아 다운로드합니다.
+	public static void download(HttpServletRequest req, HttpServletResponse resp, String directory, String sfileName, String ofileName) {
+		String sDirectory = req.getServletContext().getRealPath(directory);
+		try {
+			//파일을 찾아 입력 스트림 생성
+			File file = new File(sDirectory, sfileName);
+			InputStream iStream = new FileInputStream(file);
+			
+			//한글 파일명 깨짐 방지
+			String client = req.getHeader("User-Agent");
+			if(client.indexOf("WOW64")== -1) {
+				ofileName = new String(ofileName.getBytes("UTF-8"), "ISO-8859-1");
+			}
+			else {
+				ofileName = new String(ofileName.getBytes("KSC5601"), "ISO-8859-1");
+			}
+			
+			//파일 다운로드용 응답 헤더 설정
+			resp.reset();
+			resp.setContentType("application/octet-stream");
+			resp.setHeader("Content-Disposition", "attachment; filename=\""+ofileName+"\"");
+			resp.setHeader("Content-Length",""+ file.length());
+			
+			//out.clear(); //출력 스트림 초기화
+			
+			//response 내장 객체로부터 새로운 출력 스트림 생성
+			OutputStream oStream = resp.getOutputStream();
+			
+			//출력 스트림에 파일 내용 출력
+			byte b[] = new byte[1024*1024*2];
+			int readBuffer = 0;
+			while((readBuffer = iStream.read(b))>0) {
+				oStream.write(b,0,readBuffer);
+			}
+			//입 출력 스트림 닫기
+			iStream.close();
+			oStream.close();
+		}
+		catch(FileNotFoundException e) {
+			System.out.println("파일을 찾을 수 없습니다.");
+			e.printStackTrace();
+		}
+		catch(Exception e) {
+			System.out.println("예외가 발생하였습니다.");
+			e.printStackTrace();
+		}
+	}
+
+```
+- download()메서드는  request, response내장 객체와 디렉터리명, 파일명, 원본 파일명을 매개변수로 전달 받는다.
+- sDirectory는 서블릿에서 디렉터리의 물리적 경로를 얻어서 저장한다.
+- User-Agent를 통해 클라이언트의 웹 브라우저 종류를 얻어온 후 케릭터셋을 설정한다.
+
+* DownloadController.java(파일 다운로드 서블릿 작성)
+```
+@WebServlet("/down.do")
+
+protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		//매개변수 받기
+		String ofile = req.getParameter("ofile"); //원본 파일명
+		String sfile = req.getParameter("sfile"); //저장된 파일명
+		String idx = req.getParameter("idx"); //게시물 일련번호
+		
+		//파일 다운로드
+		FileUtil.download(req, resp, "/Uploads", sfile, ofile);
+		
+		//해당 게시물의 다운로드 수 1 증가
+		MVCBoardDAO dao = new MVCBoardDAO();
+		dao.downCountPlus(idx);
+		dao.close();
+	}
+```
+- 유저가 다운로드 링크 클릭 시(jsp(뷰) 에서) 전달하는 매개변수를 받아와서 파일을 다운로드 한 후 다운로드 횟수를 증가시킨다.
+
+- 동작 확인
+![image](https://user-images.githubusercontent.com/86938974/166394484-82adadee-11b4-41ba-b069-b1b604317cc8.png)
+![image](https://user-images.githubusercontent.com/86938974/166394496-de21629d-3a52-4571-b23e-12b3fba05bcd.png)
+
+![image](https://user-images.githubusercontent.com/86938974/166394517-90ac5755-45d4-402b-8966-1596d15cfbaa.png)
+![image](https://user-images.githubusercontent.com/86938974/166394553-d30bd115-a043-4c90-97da-b0cef629ce8d.png)
+- 다운로드 수 올라가는것 확인
+![image](https://user-images.githubusercontent.com/86938974/166394708-8df246b5-0e4e-4c68-a88d-f56ddc76307a.png)
+
+
+* 삭제하기
+	* 요청명/서블릿 매핑
+	- 비밀번호 입력 페이지로 이동하기 위한 서블릿 작성
+	- mvcboard/PassController.java
+```
+@WebServlet("/pass.do")
+
+protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		req.setAttribute("mode", req.getParameter("mode"));
+		req.getRequestDispatcher("/Pass.jsp").forward(req, resp);
+	}
+
+```
+
+-  mode매개변수 값을 request영역에 저장한 다음 Pass.jsp로 포워드
+
+* 뷰 작성
+	- Pass.jsp
+```
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type = "text/javascript">
+	function validateForm(form){
+		if(form.pass.value == ""){
+			alert("비밀번호를 입력하세요.");
+			form.pass.focus();
+			return false;
+		}
+	}
+</script>
+</head>
+<body>
+	<h2>파일 첨부형 게시판 - 비밀번호 검증(Pass)</h2>
+	<form name="writeFrm" method = "post" action = "/pass.do" onsubmit="return validateForm(this);">
+		<input type="hidden" name="idx" value="${param.idx}"/>
+		<input type="hidden" name="mode" value="${param.mode}"/>
+		<table border="1" width="90%">
+			<tr>
+				<td>비밀번호</td>
+				<td>
+					<input type="password" name = "pass" style="width:100px;"/>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2" aling="center">
+					<button type="submit">검증하기</button>
+					<button type="reset">RESET</button>
+					<button type="button" onclick="location.href='/list.do';">목록 바로가기</button>
+				</td>
+			</tr>
+		</table>
+	</form>
+</body>
+</html>
+```
+* 모델 작성
+	- DAO클래스에 비밀번호 확인과 삭제하기 메서드 적용
+```
+
+//입력한 비밀번호가 지정한 일련번호의 게시물의 비밀번호와 일치하는지 확인
+    public boolean confirmPassword(String pass, String idx) {
+    	boolean isCorr = true;
+    	try {
+    		String sql = "SELECT COUNT(*) FROM mvcboard WHERE pass=? and idx=?";
+    		psmt = con.prepareStatement(sql);
+    		psmt.setString(1, pass);
+    		psmt.setString(2, idx);
+    		rs = psmt.executeQuery();
+    		rs.next();
+    		if(rs.getInt(1)==0) {
+    			isCorr=false;
+    		}
+    	}
+    	catch(Exception e) {
+    		isCorr = false;
+    		e.printStackTrace();
+    	}
+    	return isCorr;
+    }
+    
+    //지정한 일련번호의 게시물을 삭제합니다.
+    public int deletePost(String idx) {
+    	int result=0;
+    	try {
+    		String query = "DELETE FROM mvcboard where idx=?";
+    		psmt = con.prepareStatement(query);
+    		psmt.setString(1, idx);
+    		result = psmt.executeUpdate();
+    	}
+    	catch(Exception e) {
+    		System.out.println("게시물 삭제 중 예외 발생");
+    		e.printStackTrace();
+    	}
+    	return result;
+    }
+
+```
+
+* 컨트롤러 작성
+	- 서블릿을 작성하기 앞서 서블릿에서 사용할 유틸리티 메서드 생성, 글 삭제 시 파일도 같이 삭제한다
+	- FileUtil 클래스에 파일 삭제 메서드 추가
+```
+
+public static void deleteFile(HttpServletRequest req, String directory, String filename) {
+		String sDirectory = req.getServletContext().getRealPath(directory);
+		File file = new File(sDirectory + File.separator + filename);
+		if(file.exists()) {
+			file.delete();
+		}
+	}
+```
+- 파일이 저장된 디렉터리의 물리적 경로를 얻어온 후 경로와 파일명을 결합하여 파일 객체 생성, 파일이 존재하면 삭제한다.
+
+- 전송된 비밀번호를 확인 후 삭제 혹은 수정을 하기 위한 서블릿 작성(PassController.java)
+```
+
+protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		//매개변수 저장
+		String idx = req.getParameter("idx");
+		String mode = req.getParameter("mode");
+		String pass = req.getParameter("pass");
+		
+		//비밀번호 확인
+		MVCBoardDAO dao = new MVCBoardDAO();
+		boolean confirmed = dao.confirmPassword(pass, idx);
+		dao.close();
+		
+		if(confirmed) { //비밀번호 일치
+			if(mode.equals("edit")) { // 수정모드
+				HttpSession session = req.getSession();
+				session.setAttribute("pass", pass);
+				resp.sendRedirect("/edit.do?idx="+idx);
+				
+			}
+			else if(mode.equals("delete")) // 삭제모드
+				dao = new MVCBoardDAO();
+				MVCBoardDTO dto = dao.selectView(idx);
+				int result = dao.deletePost(idx);
+				dao.close();
+				if(result == 1) { //게시물 삭제 성공 시 첨부파일도 삭제
+					String saveFileName = dto.getSfile();
+					FileUtil.deleteFile(req, "/Uploads", saveFileName);
+				}
+				JSFunction.alertLocation(resp, "삭제되었습니다.", "/list.do");
+		}
+		else {//비밀번호 불일치
+			JSFunction.alertBack(resp, "비밀번호 검증에 실패했습니다.");
+		}
+	}
+
+```
+- 비밀번호 입력폼에서 전송한값을 받아 처리하므로 doPost()메서드에서 작성
+- DAO를 통해 비밀번호가 맞는지 확인
+- 비밀번호 일치, 현재 요청이 수정이라면 session 영역에 비밀번호를 저장한 후 수정하기 페이지로 이동
+- 현재 요청이 삭제라면 첨부 파일도 같이 삭제해야하므로 기존 정보를 보관해뒀다가 삭제 후에 보관해둔 정보에서 파일 이름을 찾아 첨부파일까지 마저 삭제한다.
+- 비밀번호를 session영역에 저장한 이유 : 수정하기 페이지의 요청명은 edit.do?idx=일련번호 형태이므로, 이 URL패턴을 이미 알고 있다면 비밀번호 검증 없이도 곧바로 수정하기 페이지에 접속할 수 있기 때문
+
+* 동작 확인
+	- 삭제하기 클릭
+![image](https://user-images.githubusercontent.com/86938974/166396731-41066509-2b5d-4442-9eb1-1452ad5c538b.png)
+	- 비밀번호 입력 후 검증하기
+![image](https://user-images.githubusercontent.com/86938974/166396759-fd18de7d-296f-4ae8-ba72-a2f1add08594.png)
+	- 삭제 완료
+![image](https://user-images.githubusercontent.com/86938974/166396773-4496d0c5-a80e-4858-893c-4d13a4ceefb4.png)
+
+* 수정하기
+	* 요청명/서블릿 매핑
+
+	- 상세 보기에서 사용했던 SelectView()메서드 그대로 사용, 뷰는 글쓰기에서 사용한 Write.jsp수정
+	- mvcboard/EditController.java
+```
+@WebServlet("/edit.do")
+protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		String idx = req.getParameter("idx");
+		MVCBoardDAO dao = new MVCBoardDAO();
+		MVCBoardDTO dto = dao.selectView(idx);
+		req.setAttribute("dto", dto);
+		req.getRequestDispatcher("/Edit.jsp").forward(req, resp);
+	}
+```
+- 수정할 게시물의 일련번호를 받아 기존 게시물을 내용을 담은 DTO객체를 얻어 request 영역에 저장 후 Edit.jsp로 포워드
+
+* 뷰 작성
+```
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+
+<script type = "text/javascript">
+	function validateForm(form){
+		if(form.name.value == ""){
+			alert("작성자를 입력하세요");
+			form.name.focus();
+			return false;
+		}
+		if(form.title.value == ""){
+			alert("제목을 입력하세요.");
+			form.title.focus();
+			return false;
+		}
+		if(form.content.value == ""){
+			alert("내용 입력하세요.");
+			form.content.focus();
+			return false;
+		}
+	}
+</script>
+</head>
+<body>
+	<h2>파일 첨부형 게시판 - 수정하기(Edit)</h2>
+	<form name = "writeFrm" method = "post" enctype="multipart/form-data"
+		action = "/edit.do" onsubmit="return validateForm(this);">
+	<input type = "hidden" name="idx" value="${dto.idx}"/>
+	<input type = "hidden" name="prevOfile" value="${dto.ofile}"/>
+	<input type = "hidden" name="prevSfile" value="${dto.sfile}"/>
+	
+	<table border="1" width="90%">
+    <tr>
+        <td>작성자</td>
+        <td>
+            <input type="text" name="name" style="width:150px;" value="${ dto.name }" />
+        </td>
+    </tr>
+    <tr>
+        <td>제목</td>
+        <td>
+            <input type="text" name="title" style="width:90%;" value="${ dto.title }" />
+        </td>
+    </tr>
+    <tr>
+        <td>내용</td>
+        <td>
+            <textarea name="content" style="width:90%;height:100px;">${ dto.content }</textarea>
+        </td>
+    </tr>
+    <tr>
+        <td>첨부 파일</td>
+        <td>
+            <input type="file" name="ofile" />
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" align="center">
+            <button type="submit">작성 완료</button>
+            <button type="reset">RESET</button>
+            <button type="button" onclick="location.href='/list.do';">
+                목록 바로가기
+            </button>
+        </td>
+    </tr>
+</table>   
+	
+	</form>
+</body>
+</html>
+```
 
