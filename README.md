@@ -1603,8 +1603,29 @@ protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws S
 ![image](https://user-images.githubusercontent.com/86938974/166403560-54953e73-ee7b-46c6-9eaa-b74e928e8e6d.png)
 
 * 부트스트랩 이용한 디자인
+	* 부트스트랩4 사용 코드(List.jsp 수정)
 
+```
+style.css
+.bg-color1{background-color: #1778EB;}
+.bg-color2{background-color: #eeeeee;}
+```
 
+```
+<meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+  
+  <input type="text" name="searchWord" class="form-control" style="width:30%; display:inline-block;"/>
+  <input type="submit" value="검색하기" class="btn bg-color2" style="width:15%; display:inline-block;"/>
+  
+  <tr class="bg-color1">
+  
+```
+![image](https://user-images.githubusercontent.com/86938974/166406244-267b5a69-894f-4821-8eca-8f466acbe6ad.png)
 
 
 
