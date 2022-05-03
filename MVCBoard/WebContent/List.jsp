@@ -7,29 +7,35 @@
 <meta charset="UTF-8">
 <title>파일 첨부형 게시판</title>
 <style>a{text-decoration:none;}</style>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <h2>파일 첨부형 게시판 - 목록 보기(List)</h2>
 
     <!-- 검색 폼 -->
     <form method="get">  
-    <table border="1" width="90%">
+    <table border="1" width="100%">
     <tr>
         <td align="center">
             <select name="searchField">
                 <option value="title">제목</option>
                 <option value="content">내용</option>
             </select>
-            <input type="text" name="searchWord" />
-            <input type="submit" value="검색하기" />
+            <input type="text" name="searchWord" class="form-control" style="width:30%; display:inline-block;"/>
+            <input type="submit" value="검색하기" class="btn bg-color2" style="width:15%; display:inline-block;"/>
         </td>
     </tr>
     </table>
     </form>
 
     <!-- 목록 테이블 -->
-    <table border="1" width="90%">
-        <tr>
+    <table class="table" border="1" width="90%">
+        <tr class="bg-color1">
             <th width="10%">번호</th>
             <th width="*">제목</th>
             <th width="15%">작성자</th>
@@ -69,7 +75,7 @@
     </table>
 
     <!-- 하단 메뉴(바로가기, 글쓰기) -->
-    <table border="1" width="90%">
+    <table border="1" width="100%">
         <tr align="center">
             <td>
                 ${ map.pagingImg }
