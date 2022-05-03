@@ -529,6 +529,7 @@ protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws Se
 
 * 글쓰기
 	- 서블릿 매핑(다음 부터는 애너테이션 사용), 첨부 파일 최대 용량 설정 > web.xml
+```
 
 	<servlet>
 	    <servlet-name>MVCBoardWrite</servlet-name>
@@ -545,22 +546,26 @@ protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws Se
 	    <param-value>1024000</param-value>
 	  </context-param>
   
+```
 
 * 컨트롤러 작성 1 - 작성폼으로 진입
-![화면 캡처 2022-05-03 101111](https://user-images.githubusercontent.com/86938974/166391098-7e2aa903-3322-478c-816d-df24b2686b9d.png)
+![화면 캡처 2022-05-03 101111](https://user-images.githubusercontent.com/86938974/166391341-0d7c017b-2180-45bb-8978-ba3c15965210.png)
 
 
 
+```
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 			req.getRequestDispatcher("/MVCBoard/Write.jsp").forward(req, resp);
 
 
 		}
 
+```
 
 - 작성폼으로 진입하기 위해 doGet()메서드 사용, 단순히 글쓰기 페이지로 포워드만 해준다.
 
 * 뷰 작성
+
 ```
 	<%@ page language="java" contentType="text/html; charset=UTF-8"
 	    pageEncoding="UTF-8"%>
@@ -643,12 +648,14 @@ protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws Se
 	</body>
 	</html>
 
+```
+
 - 폼값을 서버로 전송하기 전에 필수 항목 중 빈 값이 있는지를 확인하는 자바스크립트 함수 삽입
 
 
 * 모델 작성(DAO에 기능 추가) - 글쓰기 처리 메서드 추가
 
-
+```
 // 게시글 데이터를 받아 DB에 추가합니다.(파일 업로드 지원)
 	public int insertWrite(MVCBoardDTO dto) {
 		int result = 0;
@@ -674,11 +681,15 @@ protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws Se
 	}
 
 ```
+
+
 - 웹페이지(Write.jsp)에서 전송한 폼값을 서블릿이 받아 DTO에 저장 후 이 DAO로 전달
 - INSERT쿼리문 작성
 
 * 컨트롤러 작성2 - 폼값 처리
-![화면 캡처 2022-05-03 101303](https://user-images.githubusercontent.com/86938974/166391203-f6179b9c-4b12-4793-946f-ca021a1ce7be.png)
+![화면 캡처 2022-05-03 101303](https://user-images.githubusercontent.com/86938974/166391358-699148df-ee21-452e-937e-e7e4396d7f66.png)
+
+
 
 ```
 package fileUpload;
@@ -704,6 +715,7 @@ public class FileUtil {
 }
 
 ```
+
 - 컨트롤러에 글쓰기 메서드 추가
 
 
@@ -819,10 +831,12 @@ public class WriteController extends HttpServlet {
 
 
 ```
+
 - 파일이 업로드될 Uploads 디렉터리의 물리적 경로와 web.xml에 컨텍스트 초기화 매개변수로 설정해둔 업로드 제한 용량을 얻어온 후, 앞에서 만든 FileUtil.uploadFile()메서드 호출
 - 폼값을 DTO에 저장해 DAO를 통해 데이터베이스에 기록
 
 - 유틸리티 메서드 추가 ( utils.JSFunction.java )
+
 
 ```
  // 메시지 알림창을 띄운 후 이전 페이지로 돌아갑니다.
@@ -868,6 +882,8 @@ public class WriteController extends HttpServlet {
         catch (Exception e) {}
     }
 ```
+
+
 -실행화면(Write.jsp)
 
 #사진 첨부할 것(509)
@@ -882,6 +898,8 @@ public class WriteController extends HttpServlet {
 
 * 모델 작성
 	- 주어진 일련번호에 해당하는 게시물을 DTO로 반환하는 메소드와 조회수를 증가시키는 메소드를 작성
+	
+	
 ```
  //주어진 일련번호에 해당하는 게시물을 DTO에 담아 반환한다.
     public MVCBoardDTO selectView(String idx) {
@@ -927,6 +945,7 @@ public class WriteController extends HttpServlet {
     	}
     }
 ```
+
 *컨트롤러 작성
 	- 상세 보기를 위한 서블릿 작성
 	- 매핑은 애너테이션 사용
@@ -954,6 +973,7 @@ public class ViewController extends HttpServlet {
 	}
 
 ```
+
 - 게시물 조회 요청이 오면 DAO객체 생성, 조회수 증가 후 게시물 내용을 가져온다.
 - 줄바꿈 처리
 - DTO객체를 request 영역에 저장 후 뷰로 포워드한다.
