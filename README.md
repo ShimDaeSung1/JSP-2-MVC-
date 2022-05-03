@@ -872,6 +872,11 @@ public class WriteController extends HttpServlet {
 
 #사진 첨부할 것(509)
 
+![image](https://user-images.githubusercontent.com/86938974/166390756-01d3b26a-64d2-4c1a-949e-9fd3a12b9949.png)
+
+![image](https://user-images.githubusercontent.com/86938974/166390773-35d6816c-deaf-4dca-a003-2f0d09117373.png)
+	- 파일이 첨부되는 것을 알 수 있다.
+
 파일의 용량이 1MB를 초과하면 다음과 같이 경고창이 뜬 후 화면으로 돌아간다.
 ![image](https://user-images.githubusercontent.com/86938974/166206034-8d8d9d16-5f3a-43eb-bdf4-4f7f52f0438f.png)
 
