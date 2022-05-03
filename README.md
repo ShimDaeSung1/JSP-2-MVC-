@@ -884,10 +884,10 @@ public class WriteController extends HttpServlet {
     }
 ```
 ```
-
+```
 -실행화면(Write.jsp)
 
-#사진 첨부할 것(509)
+
 
 ![image](https://user-images.githubusercontent.com/86938974/166390756-01d3b26a-64d2-4c1a-949e-9fd3a12b9949.png)
 
