@@ -1625,7 +1625,7 @@ style.css
   <tr class="bg-color1">
   
 ```
-![image](https://user-images.githubusercontent.com/86938974/166406244-267b5a69-894f-4821-8eca-8f466acbe6ad.png)
+![image](https://user-images.githubusercontent.com/86938974/166406806-a08d7237-867f-4b7a-b214-3463325d389e.png)
 
 
 
